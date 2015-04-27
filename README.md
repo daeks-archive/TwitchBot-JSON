@@ -1,2 +1,3 @@
 # twitchbot
-PHP based Twitch Bot
+
+Source code will be made public soon. 
