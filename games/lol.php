@@ -26,7 +26,7 @@
       $output = array();
       
       $ch = curl_init(); 
-      curl_setopt($ch, CURLOPT_URL, 'https://euw.api.pvp.net/api/lol/euw/v2.5/league/by-summoner/'.LOL_USERID.'?api_key='.$this->loltoken);
+      curl_setopt($ch, CURLOPT_URL, 'https://euw.api.pvp.net/api/lol/euw/v2.5/league/by-summoner/'.LOL_USERID.'?api_key='.LOL_APITOKEN);
       curl_setopt($ch, CURLOPT_HEADER, 0);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
       curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
