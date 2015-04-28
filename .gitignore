@@ -1,0 +1,3 @@
+db/*
+!db/README.md
+config.php
