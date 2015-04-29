@@ -164,6 +164,9 @@
               if($this->data[3] == '+o') {
                 if(!in_array($this->data[4], $this->db[$this->target]['config']['mods'])) {
                   $this->db[$this->target]['config']['mods'] = $this->add($this->db[$this->target]['config']['mods'], $this->data[4]);
+                  if($this->target == '#'.strtolower(BOTNAME)) {
+                    $this->say(null, true, 'Added '.$this->data[4].' to modlist');
+                  }
                 }
               }
               if($this->data[3] == '-o') {
@@ -172,8 +175,11 @@
             break;
             case 'PRIVMSG':
               if(isset($this->data[3])) {
-                $this->command = ltrim($this->data[3], ':');
-                if(substr($this->command, 0, 1) == '!') {                  
+                $this->command = strtolower(ltrim($this->data[3], ':'));
+                if(substr($this->command, 0, 1) == '!') {
+                  if($this->command == '!'.strtolower(BOTNAME)) {
+                    $this->command = '!BOTNAME';
+                  }
                   if(!in_array($this->command, $this->db[$this->target]['config']['banned_cmds']) && !in_array($this->username, $this->db[$this->target]['config']['banned_users'])) {
                     if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php')) {
                       try {
@@ -189,42 +195,42 @@
                       } catch (Exception $e) {
                         $this->say(null, true, 'Ex: '.$e->getMessage());
                       }
-                    } else {
-                      if(array_key_exists($this->command, $this->db[$this->target]['data']['cmds'])) {
-                        if($this->db[$this->target]['data']['cmds'][$this->command]['enabled']) {
-                          $hasaccess = false;
-                          if($this->db[$this->target]['data']['cmds'][$this->command]['level'] == 'none') {
-                            $hasaccess = true;
-                          } else {
-                            $levels = explode(',', $this->db[$this->target]['data']['cmds'][$this->command]['level']);
-                            foreach($levels as $level) {
-                              if($level == 'permit') {
-                                if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
-                                  $hasaccess = true;
-                                  break;
-                                }
-                              } else if($level == 'op') {
-                                if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
-                                  $hasaccess = true;
-                                  break;
-                                }
-                              } else if($level == 'admin') {
-                                if($this->isadmin($this->target) || $this->isowner()) {
-                                  $hasaccess = true;
-                                  break;
-                                }
-                              } else if($level == 'owner') {
-                                if($this->isowner()) {
-                                  $hasaccess = true;
-                                  break;
-                                }
+                    } 
+                    
+                    if(array_key_exists($this->command, $this->db[$this->target]['data']['cmds'])) {
+                      if($this->db[$this->target]['data']['cmds'][$this->command]['enabled']) {
+                        $hasaccess = false;
+                        if($this->db[$this->target]['data']['cmds'][$this->command]['level'] == 'none') {
+                          $hasaccess = true;
+                        } else {
+                          $levels = explode(',', $this->db[$this->target]['data']['cmds'][$this->command]['level']);
+                          foreach($levels as $level) {
+                            if($level == 'permit') {
+                              if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+                                $hasaccess = true;
+                                break;
+                              }
+                            } else if($level == 'op') {
+                              if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+                                $hasaccess = true;
+                                break;
+                              }
+                            } else if($level == 'admin') {
+                              if($this->isadmin($this->target) || $this->isowner()) {
+                                $hasaccess = true;
+                                break;
+                              }
+                            } else if($level == 'owner') {
+                              if($this->isowner()) {
+                                $hasaccess = true;
+                                break;
                               }
                             }
-                            $hasaccess = false;
                           }
-                          if($hasaccess) {
-                            $this->say($this->target, false, ''.$this->db[$this->target]['data']['cmds'][$this->command]['text']);
-                          }
+                          $hasaccess = false;
+                        }
+                        if($hasaccess) {
+                          $this->say($this->target, false, ''.$this->db[$this->target]['data']['cmds'][$this->command]['text']);
                         }
                       }
                     }

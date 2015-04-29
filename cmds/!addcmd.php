@@ -9,7 +9,17 @@
       if(isset($this->data[5])) {
         $this->data[4] = strtolower($this->data[4]);
         if(substr($this->data[4], 0, 1) == '!') {
-          if(!file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->data[4].'.php') && !array_key_exists($this->data[4], $this->db[$this->target]['data']['cmds'])) {
+          $found = false;
+          foreach($this->db[$this->target]['config']['plugins'] as $ext => $config) {
+            if(file_exists(PLUGINS_PATH.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR.$this->data[4].'.php')) {
+              $found = true;
+              break;
+            }
+          }
+          if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->data[4].'.php') || array_key_exists($this->data[4], $this->db[$this->target]['data']['cmds'])) {
+            $found = true;
+          }
+          if(!$found) {
             $output = '';
             for($i=5;$i<sizeof($this->data);$i++) {
               $output .= $this->data[$i].' ';
@@ -22,9 +32,19 @@
             $this->say($this->target, true, '@'.$this->username.' command already exists');
           }
         } else if(substr($this->data[4], 0, 4) == '-ul=') {
-          $this->data[4] = strtolower($this->data[4]);
           $this->data[5] = strtolower($this->data[5]);
-          if(!file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->data[5].'.php') && !array_key_exists($this->data[5], $this->db[$this->target]['data']['cmds'])) {
+          $found = false;
+          foreach($this->db[$this->target]['config']['plugins'] as $ext => $config) {
+            if(file_exists(PLUGINS_PATH.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR.$this->data[5].'.php')) {
+              $found = true;
+              break;
+            }
+          }
+          if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->data[5].'.php') || array_key_exists($this->data[5], $this->db[$this->target]['data']['cmds'])) {
+            $found = true;
+          }
+          
+          if(!$found) {
             $output = '';
             for($i=6;$i<sizeof($this->data);$i++) {
               $output .= $this->data[$i].' ';
