@@ -34,14 +34,14 @@
         $output = ' - Last stats for '.$lastgame['match']['summoner']['name'].': ';
         $output .= $lastgame['mode'].' - Played as '.$lastgame['match']['summoner']['champion_name'];
         
-        if(!isset($game['match']['summoner']['CHAMPIONS_KILLED'])) {
-          $game['match']['summoner']['CHAMPIONS_KILLED'] = 0;
+        if(!isset($lastgame['match']['summoner']['CHAMPIONS_KILLED'])) {
+          $lastgame['match']['summoner']['CHAMPIONS_KILLED'] = 0;
         }
-        if(!isset($game['match']['summoner']['ASSISTS'])) {
-          $game['match']['summoner']['ASSISTS'] = 0;
+        if(!isset($lastgame['match']['summoner']['ASSISTS'])) {
+          $lastgame['match']['summoner']['ASSISTS'] = 0;
         }
-        if(!isset($game['match']['summoner']['NUM_DEATHS'])) {
-          $game['match']['summoner']['NUM_DEATHS'] = 0;
+        if(!isset($lastgame['match']['summoner']['NUM_DEATHS'])) {
+          $lastgame['match']['summoner']['NUM_DEATHS'] = 0;
         }
         
         $output .= ' (KDA '.$lastgame['match']['summoner']['CHAMPIONS_KILLED'].'/'.$lastgame['match']['summoner']['NUM_DEATHS'].'/'.$lastgame['match']['summoner']['ASSISTS'].')';
