@@ -1,8 +1,11 @@
 <?php
 
-  $cmd = array('level' => '',
+  $cmd = array('level' => 'none',
+               'count' => false,
                'help' => 'Shows version information');
 
-  $this->say($this->target, false, '@'.$this->username.' I am '.BOTNAME.' (v'.$this->version.') - (c) daeks '.date('Y').' MIT license');
+  if($execute) {
+    $this->say($this->target, false, '@'.$this->username.' I am '.BOTNAME.' (v'.$this->version.') - (c) daeks '.date('Y').' MIT license');
+  }
 
 ?>

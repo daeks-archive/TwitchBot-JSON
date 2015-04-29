@@ -1,4 +1,20 @@
 <?php
+    
+  define('DB_PATH', 'db');
+  define('CMDS_PATH', 'cmds');
+  define('PLUGINS_PATH', 'plugins');
+  define('LOG_PATH', 'logs');
+  define('CACHE_PATH', 'cache');
+
+  register_shutdown_function('CatchFatalError');
+
+  function CatchFatalError() {
+    $error = error_get_last();
+    $ignore = E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_STRICT | E_DEPRECATED | E_USER_DEPRECATED;
+    if (($error['type'] & $ignore) == 0) {
+      file_put_contents(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db', json_encode($error, JSON_FORCE_OBJECT), LOCK_EX);
+    }
+  }
 
   require_once('config.php');
   
@@ -21,6 +37,7 @@
     private $port = 6667;
 
     private $mode;
+    private $command;
     private $target;
     private $username;
     
@@ -29,31 +46,53 @@
     private $stats;
     private $db;
     
-    private $last = array();
+    private $error;
+    private $tmp = array();
     
     // Constants;
-    private $storage = array('mods', 'permits', 'cmds', 'data', 'users', 'stats');
+    private $levels = array('none', 'permit', 'op', 'admin', 'owner');
+    private $storages = array('data', 'stats', 'config');
+    private $tmp_tables = array('history', 'plugins', 'active');
+    private $data_tables = array('quotes', 'cmds');
+    private $stats_tables = array('cmds');
+    private $config_tables = array('plugins', 'mods', 'permits', 'banned_cmds', 'banned_users', 'options');
     private $colors = array('Blue', 'Coral', 'DodgerBlue', 'SpringGreen', 'YellowGreen', 'Green', 'OrangeRed', 'Red', 'GoldenRod', 'HotPink', 'CadetBlue', 'SeaGreen', 'Chocolate', 'BlueViolet', 'Firebrick');
     private $userentry = array('add' => null, 'join' => null, 'part' => null, 'account' => null, 'points' => 0, 'coins' => 100, 'violations' => 0, 'count' => 1);
      
     function __construct($version) { 
       $this->version = date('YmdHi', $version);
+      
+      if(file_exists(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db')) {
+        $this->error = json_decode(file_get_contents(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db'), true);
+        unlink(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db');
+      }
+      
+      foreach($this->tmp_tables as $table) {
+        $this->tmp[$table] = array();
+      }
         
       $this->socket = fsockopen($this->server, $this->port);
       $this->send('PASS '.OAUTH);
       $this->send('NICK '.BOTNAME);
       $this->send('USER '.BOTNAME.' '.BOTNAME.' '.BOTNAME.' '.BOTNAME);
       
-      foreach(array('#'.strtolower(BOTNAME), strtolower('#'.STREAMER)) as $channel) {
-        foreach($this->storage as $database) {
-          $this->db[$channel][$database] = $this->load($channel.'.'.$database.'.db');
-        }
-        if($channel == '#'.strtolower(BOTNAME)) {
-          $this->say($channel, true, '/color '.COLOR);
-        }
+      $this->db['#'.strtolower(BOTNAME)]['channels'] = $this->load('#'.strtolower(BOTNAME).'.channels.db');
+      if(!in_array('#'.strtolower(BOTNAME), $this->db['#'.strtolower(BOTNAME)]['channels'])) {
+        $this->db['#'.strtolower(BOTNAME)]['channels'] = $this->add($this->db['#'.strtolower(BOTNAME)]['channels'], '#'.strtolower(BOTNAME));
+      }
+      $this->save();
+      
+      foreach($this->db['#'.strtolower(BOTNAME)]['channels'] as $channel) {
+        $this->init($channel);        
         $this->send('JOIN '.$channel);
       }
-     
+      
+      $this->db['#'.strtolower(BOTNAME)]['channels'] = $this->remove($this->db['#'.strtolower(BOTNAME)]['channels'], '#'.strtolower(BOTNAME));
+      $this->say(null, true, '/color '.COLOR);
+      if(isset($this->error)) {
+        $this->log('Error: '.$this->error['message']. ' in '.basename($this->error['file'], ".php").' on line '.$this->error['line']);
+        $this->say(null, true, 'Error: '.$this->error['message']. ' in '.basename($this->error['file'], ".php").' on line '.$this->error['line']);
+      }
       $this->listen();
     }
  
@@ -70,23 +109,26 @@
           switch($this->mode) {  
             case 'JOIN':
               if(ltrim($this->data[0], ':') == strtolower(BOTNAME.'!'.BOTNAME.'@'.BOTNAME.'.tmi.twitch.tv')) {
-                array_push($this->db[$this->target]['mods'], OWNER);
+                if(!in_array(OWNER, $this->db[$this->target]['config']['mods'])) {
+                  $this->db[$this->target]['config']['mods'] = $this->add($this->db[$this->target]['config']['mods'], OWNER);
+                }
                 
                 if($this->target == '#'.strtolower(BOTNAME)) {
                   $this->say($this->target, true, '/mod '.OWNER);
+                  $this->say(null, true, 'Loaded v'.$this->version);
                 } else {
-                  $this->say(null, true, 'Joined '.$this->target. ' - v'.$this->version);
+                  $this->say(null, true, 'Joined '.$this->target);
                 }
               } else {                
-                if(!isset($this->db[$this->target]['users'][$this->username])) {
+                /*if(!isset($this->db[$this->target]['users'][$this->username])) {
                   $this->db[$this->target]['users'][$this->username] = $this->userentry;
-                  $this->db[$this->target]['users']['add'] = time();
-                  $this->db[$this->target]['users']['join'] = time();
+                  $this->db[$this->target]['users'][$this->username]['add'] = time();
+                  $this->db[$this->target]['users'][$this->username]['join'] = time();
                 } else {
-                  $this->db[$this->target]['users']['join'] = time();
-                  $this->db[$this->target]['users']['count'] = $this->userstats[$this->target][$this->username]['count'] + 1;
+                  $this->db[$this->target]['users'][$this->username]['join'] = time();
+                  $this->db[$this->target]['users'][$this->username]['count'] = $this->db[$this->target]['users'][$this->username]['count'] + 1;
                 }
-                $this->save();
+                $this->save();*/
                 
                 if($this->username == ltrim($this->target,'#')) {
                   $this->say($this->target, true, 'Welcome, '.$this->username);
@@ -95,51 +137,113 @@
               }
             break;
             case 'PART':
-              if(isset($this->db[$this->target]['users'][$this->username])) {
-                $this->db[$this->target]['users']['part'] = time();
-                $this->save();
+              if(ltrim($this->data[0], ':') == strtolower(BOTNAME.'!'.BOTNAME.'@'.BOTNAME.'.tmi.twitch.tv')) {
+                  $this->say(null, true, 'Parted '.$this->target);
+              } else {
+                /*if(isset($this->db[$this->target]['users'][$this->username])) {
+                  $this->db[$this->target]['users'][$this->username]['part'] = time();
+                  $this->save();
+                }*/
               }
             break;
             case '353':
               $start = array_search($this->data[4], $this->data)+1;
               for($i=$start;$i<sizeof($this->data);$i++) {
-                if(!isset($this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')])) {
+                /*if(!isset($this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')])) {
                   $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')] = $this->userentry;
-                  $this->db[$this->data[4]]['users']['add'] = time();
-                  $this->db[$this->data[4]]['users']['join'] = time();
+                  $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['add'] = time();
+                  $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['join'] = time();
                 } else {
                   $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['join'] = time();
                   $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['count'] = $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['count'] + 1;
                 }
-                $this->save();
+                $this->save();*/
               }
             break;
             case 'MODE':
               if($this->data[3] == '+o') {
-                if(!in_array($this->data[4], $this->db[$this->target]['mods'])) {
-                  array_push($this->db[$this->target]['mods'], $this->data[4]);
+                if(!in_array($this->data[4], $this->db[$this->target]['config']['mods'])) {
+                  $this->db[$this->target]['config']['mods'] = $this->add($this->db[$this->target]['config']['mods'], $this->data[4]);
                 }
               }
               if($this->data[3] == '-o') {
-                unset($this->db[$this->target]['mods'][$this->data[4]]);
+                $this->db[$this->target]['config']['mods'] = $this->remove($this->db[$this->target]['config']['mods'], $this->data[4]);
               }
             break;
             case 'PRIVMSG':
               if(isset($this->data[3])) {
-                $command = ltrim($this->data[3], ':');
-                if(substr($command, 0, 1) == '!') {
-                  if(!isset($this->db[$this->target]['stats'][$command])) {
-                    $this->db[$this->target]['stats'][$command] = 1;
-                  } else {
-                    $this->db[$this->target]['stats'][$command] = $this->db[$this->target]['stats'][$command] + 1;
-                  }
-                  $this->save();
-                  if(file_exists('cmds/'.$command.'.php')) {
-                    include('cmds/'.$command.'.php');
-                  } else {
-                    if(array_key_exists($command, $this->db[$this->target]['cmds'])) {
-                      $this->say($this->target, false, ''.$this->db[$this->target]['cmds'][$command]);
+                $this->command = ltrim($this->data[3], ':');
+                if(substr($this->command, 0, 1) == '!') {                  
+                  if(!in_array($this->command, $this->db[$this->target]['config']['banned_cmds']) && !in_array($this->username, $this->db[$this->target]['config']['banned_users'])) {
+                    if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php')) {
+                      try {
+                        $execute = true;
+                        include(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php');
+                      } catch (Exception $e) {
+                        $this->say(null, true, 'Ex: '.$e->getMessage());
+                      }
+                    } else if($this->plugincmd($this->command) != '') {
+                      try {
+                        $execute = true;
+                        include(PLUGINS_PATH.DIRECTORY_SEPARATOR.$this->plugincmd($this->command).DIRECTORY_SEPARATOR.$this->command.'.php');
+                      } catch (Exception $e) {
+                        $this->say(null, true, 'Ex: '.$e->getMessage());
+                      }
+                    } else {
+                      if(array_key_exists($this->command, $this->db[$this->target]['data']['cmds'])) {
+                        if($this->db[$this->target]['data']['cmds'][$this->command]['enabled']) {
+                          $hasaccess = false;
+                          if($this->db[$this->target]['data']['cmds'][$this->command]['level'] == 'none') {
+                            $hasaccess = true;
+                          } else {
+                            $levels = explode(',', $this->db[$this->target]['data']['cmds'][$this->command]['level']);
+                            foreach($levels as $level) {
+                              if($level == 'permit') {
+                                if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+                                  $hasaccess = true;
+                                  break;
+                                }
+                              } else if($level == 'op') {
+                                if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+                                  $hasaccess = true;
+                                  break;
+                                }
+                              } else if($level == 'admin') {
+                                if($this->isadmin($this->target) || $this->isowner()) {
+                                  $hasaccess = true;
+                                  break;
+                                }
+                              } else if($level == 'owner') {
+                                if($this->isowner()) {
+                                  $hasaccess = true;
+                                  break;
+                                }
+                              }
+                            }
+                            $hasaccess = false;
+                          }
+                          if($hasaccess) {
+                            $this->say($this->target, false, ''.$this->db[$this->target]['data']['cmds'][$this->command]['text']);
+                          }
+                        }
+                      }
                     }
+                  }
+                  
+                  $savestatistic = true;
+                  if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php')) {
+                    $execute = false;
+                    include(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php');
+                    $savestatistic = $cmd['count'];
+                  }
+                  
+                  if($savestatistic) {
+                    if(!isset($this->db[$this->target]['stats']['cmds'][$this->command])) {
+                      $this->db[$this->target]['stats']['cmds'][$this->command] = 1;
+                    } else {
+                      $this->db[$this->target]['stats']['cmds'][$this->command] = $this->db[$this->target]['stats']['cmds'][$this->command] + 1;
+                    }
+                    $this->save();
                   }
                 }
               }
@@ -159,16 +263,16 @@
       if($channel == null) {
         $channel = '#'.strtolower(BOTNAME);
       }
-      if($force || $this->isop($channel) || $this->ispermit($channel) || !isset($this->last[$channel]) || (time()-$this->last[$channel]) > $this->delay ) {
+      if($force || $this->isop($channel) || $this->ispermit($channel) || !isset($this->tmp['history'][$channel]) || (time()-$this->tmp['history'][$channel]) > $this->delay ) {
         $this->send('PRIVMSG '.$channel.' :'.$message);
-        $this->last[$channel] = time();
+        $this->tmp['history'][$channel] = time();
       }
     }
         
     function load($database) {
       $output = array();      
-      if(file_exists('db/'.$database)) {
-        $output = json_decode(file_get_contents('db/'.$database), true);
+      if(file_exists(DB_PATH.DIRECTORY_SEPARATOR.$database)) {
+        $output = json_decode(file_get_contents(DB_PATH.DIRECTORY_SEPARATOR.$database), true);
       }
       return $output;
     }
@@ -176,37 +280,36 @@
     function save() {
       foreach($this->db as $target => $database) {
         foreach($database as $key => $value) {
-          file_put_contents('db/'.$target.'.'.$key.'.db', json_encode($value, JSON_FORCE_OBJECT), LOCK_EX);
+          file_put_contents(DB_PATH.DIRECTORY_SEPARATOR.$target.'.'.$key.'.db', json_encode($value, JSON_FORCE_OBJECT), LOCK_EX);
         }
       }
     }
     
-    function ispermit() {
-      return in_array($this->username, $this->db[$this->target]['users']);
+    function plugincmd($command) {
+      $output = '';
+      foreach($this->db[$this->target]['config']['plugins'] as $ext => $config) {
+        if(file_exists(PLUGINS_PATH.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR.$command.'.php')) {
+          $output = $ext;
+          break;
+        }
+      }
+      return $output;
+    }
+    
+    function ispermit($channel) {
+      return in_array($this->username, $this->db[$channel]['config']['permits']);
     }
 
     function isop($channel) {
-      return in_array($this->username, $this->db[$this->target]['mods']);
+      return in_array($this->username, $this->db[$channel]['config']['mods']);
     }
     
-    function isstreamer() {
-      if(ltrim($this->target, '#') == STREAMER) {
-        return true;
-      } else {
-        return false;
-      }
-    }
-    
-    function isadmin() {
-      return in_array($this->username, $this->db['#'.strtolower(BOTNAME)]['mods']);
+    function isadmin($channel) {
+      return (ltrim($channel, '#') == strtolower($this->username)) ? true : false;
     }
     
     function isowner() {
-      if(ltrim($this->target, '#') == OWNER) {
-        return true;
-      } else {
-        return false;
-      }
+      return in_array($this->username, $this->db['#'.strtolower(BOTNAME)]['config']['mods']);
     }
 
     function send($cmd) {
@@ -214,13 +317,51 @@
       $this->log($cmd);
       flush();
     }
+    
+    function add($cache, $object) {
+      if(!in_array($object, $cache)) {
+        array_push($cache, $object);
+      }
+      return $cache;
+    }
+    
+    function remove($cache, $object) {
+      if(($key = array_search($object, $cache)) !== false) {
+        unset($cache[$key]);
+      }
+      return $cache;
+    }
+    
+    function init($channel) {
+      foreach($this->storages as $database) {
+        $this->db[$channel][$database] = $this->load($channel.'.'.$database.'.db');
+      }
+      
+      foreach($this->data_tables as $name) {
+        if(!isset($this->db[$channel]['data'][$name])) {
+          $this->db[$channel]['data'][$name] = array();
+        }
+      }
+      
+      foreach($this->stats_tables as $name) {
+        if(!isset($this->db[$channel]['stats'][$name])) {
+          $this->db[$channel]['stats'][$name] = array();
+        }
+      } 
+      
+      foreach($this->config_tables as $name) {
+        if(!isset($this->db[$channel]['config'][$name])) {
+          $this->db[$channel]['config'][$name] = array();
+        }
+      }  
+    }
        
     function log($msg) {
       $msg = str_replace(array(chr(10), chr(13)), '', $msg);
       if($_SERVER['DOCUMENT_ROOT'] != '') {
         echo nl2br(trim($msg)).'<br>';
       } else {
-        file_put_contents(get_class($this).'-'.date('Ymd').'.log', $msg.PHP_EOL, FILE_APPEND | LOCK_EX);
+        file_put_contents(LOG_PATH.DIRECTORY_SEPARATOR.get_class($this).'-'.date('Ymd').'.log', $msg.PHP_EOL, FILE_APPEND | LOCK_EX);
       }
     }
 }

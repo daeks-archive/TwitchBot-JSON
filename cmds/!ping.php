@@ -1,10 +1,13 @@
 <?php
 
-  $cmd = array('level' => 'op',
+  $cmd = array('level' => 'op admin owner',
+               'count' => false,
                'help' => 'Pings the bot');
 
-  if($this->isop($this->target)) {
-    $this->say($this->target, true, '@'.$this->username.' pong');
+  if($execute) {
+    if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+      $this->say($this->target, true, '@'.$this->username.' pong');
+    }
   }
 
 ?>
