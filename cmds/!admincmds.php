@@ -17,7 +17,7 @@
               array_push($tmp, $name);
             }  
           } catch (Exception $e) {
-            $this->say(null, true, 'Ex: '.$e->getMessage());
+            $this->error($e);
           }  
         }
       }
@@ -32,7 +32,7 @@
                 array_push($tmp, $name);
               }  
             } catch (Exception $e) {
-              $this->say(null, true, 'Ex: '.$e->getMessage());
+              $this->error($e);
             }  
         }
       }

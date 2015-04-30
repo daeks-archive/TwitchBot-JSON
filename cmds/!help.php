@@ -13,7 +13,7 @@
           include(CMDS_PATH.DIRECTORY_SEPARATOR.$this->data[4].'.php');
           $this->say($this->target, false, ' - '.$cmd['help'].(isset($cmd['syntax']) ? ' - Syntax: '.$cmd['syntax'] : ''));
         } catch (Exception $e) {
-          $this->say(null, true, 'Ex: '.$e->getMessage());
+          $this->error($e);
         }
       } else {
         if($this->plugincmd($this->data[4]) != '') {
@@ -22,7 +22,7 @@
             include(PLUGINS_PATH.DIRECTORY_SEPARATOR.$this->plugincmd($this->data[4]).DIRECTORY_SEPARATOR.$this->data[4].'.php');
             $this->say($this->target, false, ' - '.$cmd['help'].(isset($cmd['syntax']) ? ' - Syntax: '.$cmd['syntax'] : ''));
           } catch (Exception $e) {
-            $this->say(null, true, 'Ex: '.$e->getMessage());
+            $this->error($e);
           }
         }
       }

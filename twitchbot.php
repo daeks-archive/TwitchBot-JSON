@@ -7,12 +7,21 @@
   define('CACHE_PATH', 'cache');
 
   register_shutdown_function('CatchFatalError');
-
   function CatchFatalError() {
     $error = error_get_last();
     $ignore = E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_STRICT | E_DEPRECATED | E_USER_DEPRECATED;
     if (($error['type'] & $ignore) == 0) {
       file_put_contents(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db', json_encode($error, JSON_FORCE_OBJECT), LOCK_EX);
+    }
+  }
+  
+  set_error_handler('exceptions_error_handler');
+  function exceptions_error_handler($severity, $message, $filename, $lineno) {
+    if (error_reporting() == 0) {
+      return;
+    }
+    if (error_reporting() & $severity) {
+      throw new ErrorException($message, 0, $severity, $filename, $lineno);
     }
   }
 
@@ -186,14 +195,14 @@
                         $execute = true;
                         include(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php');
                       } catch (Exception $e) {
-                        $this->say(null, true, 'Ex: '.$e->getMessage());
+                        $this->error($e);
                       }
                     } else if($this->plugincmd($this->command) != '') {
                       try {
                         $execute = true;
                         include(PLUGINS_PATH.DIRECTORY_SEPARATOR.$this->plugincmd($this->command).DIRECTORY_SEPARATOR.$this->command.'.php');
                       } catch (Exception $e) {
-                        $this->say(null, true, 'Ex: '.$e->getMessage());
+                        $this->error($e);
                       }
                     } 
                     
@@ -360,6 +369,10 @@
           $this->db[$channel]['config'][$name] = array();
         }
       }  
+    }
+    
+    function error($e) {
+      $this->say($this->target, true, 'Error: '.$e->getMessage(). ' in '.basename($e->getFile(), ".php").' on line '.$e->getLine());
     }
        
     function log($msg) {
