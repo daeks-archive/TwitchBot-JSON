@@ -276,7 +276,7 @@
               }
             break;
             default:
-              $this->log('Unknown mode'.$this->mode);
+              //$this->log('Unknown mode'.$this->mode);
           }
         } else {
           $this->send('PONG '.$this->data[1]);
@@ -384,7 +384,7 @@
     }
     
     function error($e) {
-      $this->log('Error: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
+      $this->log('ERROR: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
       $this->say($this->target, true, 'Error: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
     }
        
