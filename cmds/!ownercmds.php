@@ -13,7 +13,7 @@
           try {
             $execute = false;
             include(CMDS_PATH.DIRECTORY_SEPARATOR.$include);
-            if(in_array('owner', explode(' ', $cmd['level']))) {
+            if(in_array('owner', explode(' ', $cmd['level'])) && !in_array($name, $this->db[$this->target]['config']['banned_cmds'])) {
               array_push($tmp, $name);
             }  
           } catch (Exception $e) {
@@ -28,7 +28,7 @@
           try {
               $execute = false;
               include(PLUGINS_PATH.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR.$include);
-              if(in_array('owner', explode(' ', $cmd['level']))) {
+              if(in_array('owner', explode(' ', $cmd['level'])) && !in_array($name, $this->db[$this->target]['config']['banned_cmds'])) {
                 array_push($tmp, $name);
               }  
             } catch (Exception $e) {

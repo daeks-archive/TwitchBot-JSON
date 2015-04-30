@@ -383,6 +383,17 @@
       }  
     }
     
+    function destroy($channel, $purge) {
+      foreach($this->storages as $database) {
+        unset($this->db[$channel][$database]);
+        if($purge) {
+          if(file_exists(DB_PATH.DIRECTORY_SEPARATOR.$channel.'.'.$database.'.db')) {
+            unlink(DB_PATH.DIRECTORY_SEPARATOR.$channel.'.'.$database.'.db');
+          }
+        }
+      }
+    }
+    
     function error($e) {
       $this->log('ERROR: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
       $this->say($this->target, true, 'Error: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
