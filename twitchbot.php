@@ -59,7 +59,8 @@
     private $tmp = array();
     
     // Constants;
-    private $levels = array('none', 'permit', 'op', 'admin', 'owner');
+    private $cmdtriggers = array('!', '$');
+    private $levels = array('none' => 'all', 'permit' => 'permitted user', 'op' => 'moderator', 'admin' => 'broadcaster', 'owner' => 'developer');
     private $storages = array('data', 'stats', 'config');
     private $tmp_tables = array('history', 'plugins', 'active');
     private $data_tables = array('quotes', 'cmds');
@@ -128,7 +129,7 @@
                 } else {
                   $this->say(null, true, 'Joined '.$this->target);
                 }
-              } else {                
+              } else {
                 /*if(!isset($this->db[$this->target]['users'][$this->username])) {
                   $this->db[$this->target]['users'][$this->username] = $this->userentry;
                   $this->db[$this->target]['users'][$this->username]['add'] = time();
@@ -141,6 +142,7 @@
                 
                 if($this->username == ltrim($this->target,'#')) {
                   $this->say($this->target, true, 'Welcome, '.$this->username);
+                  $this->tmp['active'] = $this->add($this->tmp['active'], $this->username);
                   $this->say(null, true, 'Possible live stream detected - '.$this->username.' joined '.$this->target);
                 }
               }
@@ -149,6 +151,9 @@
               if(ltrim($this->data[0], ':') == strtolower(BOTNAME.'!'.BOTNAME.'@'.BOTNAME.'.tmi.twitch.tv')) {
                   $this->say(null, true, 'Parted '.$this->target);
               } else {
+                if($this->username == ltrim($this->target,'#')) {
+                  $this->tmp['active'] = $this->remove($this->tmp['active'], $this->username);
+                }
                 /*if(isset($this->db[$this->target]['users'][$this->username])) {
                   $this->db[$this->target]['users'][$this->username]['part'] = time();
                   $this->save();
@@ -158,6 +163,10 @@
             case '353':
               $start = array_search($this->data[4], $this->data)+1;
               for($i=$start;$i<sizeof($this->data);$i++) {
+                if(ltrim($this->data[$i], ':') == ltrim($this->target,'#') && strtolower(ltrim($this->data[$i], ':')) != strtolower(BOTNAME)) {
+                  $this->tmp['active'] = $this->remove($this->tmp['active'], ltrim($this->data[$i], ':'));
+                  $this->say(null, true, 'Possible live stream detected - '.ltrim($this->data[$i], ':').' found in '.$this->target);
+                }
                 /*if(!isset($this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')])) {
                   $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')] = $this->userentry;
                   $this->db[$this->data[4]]['users'][ltrim($this->data[$i], ':')]['add'] = time();
@@ -183,11 +192,14 @@
               }
             break;
             case 'PRIVMSG':
+              if($this->username == ltrim($this->target,'#') && strtolower($this->username) != strtolower(BOTNAME)) {
+                $this->tmp['active'] = $this->add($this->tmp['active'], $this->username);
+              }
               if(isset($this->data[3])) {
                 $this->command = strtolower(ltrim($this->data[3], ':'));
-                if(substr($this->command, 0, 1) == '!') {
-                  if($this->command == '!'.strtolower(BOTNAME)) {
-                    $this->command = '!BOTNAME';
+                if(in_array(substr($this->command, 0, 1), $this->cmdtriggers)) {
+                  if($this->command == substr($this->command, 0, 1).strtolower(BOTNAME)) {
+                    $this->command = substr($this->command, 0, 1).'BOTNAME';
                   }
                   if(!in_array($this->command, $this->db[$this->target]['config']['banned_cmds']) && !in_array($this->username, $this->db[$this->target]['config']['banned_users'])) {
                     if(file_exists(CMDS_PATH.DIRECTORY_SEPARATOR.$this->command.'.php')) {
@@ -213,7 +225,7 @@
                           $hasaccess = true;
                         } else {
                           $levels = explode(',', $this->db[$this->target]['data']['cmds'][$this->command]['level']);
-                          foreach($levels as $level) {
+                          foreach($levels as $level => $value) {
                             if($level == 'permit') {
                               if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
                                 $hasaccess = true;
@@ -264,7 +276,7 @@
               }
             break;
             default:
-              //$this->log('Invalid mode'.$this->mode);
+              $this->log('Unknown mode'.$this->mode);
           }
         } else {
           $this->send('PONG '.$this->data[1]);
@@ -372,7 +384,8 @@
     }
     
     function error($e) {
-      $this->say($this->target, true, 'Error: '.$e->getMessage(). ' in '.basename($e->getFile(), ".php").' on line '.$e->getLine());
+      $this->log('Error: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
+      $this->say($this->target, true, 'Error: '.$e->getMessage(). ' in '.str_replace(dirname(__FILE__).DIRECTORY_SEPARATOR, '', str_replace('.php', '', $e->getFile())).' on line '.$e->getLine());
     }
        
     function log($msg) {

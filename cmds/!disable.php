@@ -6,7 +6,7 @@
   
   if($execute) {
     if($this->isadmin($this->target) || $this->isowner()) {
-      if(isset($this->data[4]) && substr($this->data[4], 0, 1) == '!') {
+      if(isset($this->data[4]) && in_array(substr($this->data[4], 0, 1), $this->cmdtriggers)) {
         $this->data[4] = strtolower($this->data[4]);
         if(!in_array($this->data[4], $this->db[$this->target]['config']['banned_cmds'])) {
           $this->db[$this->target]['config']['banned_cmds'] = $this->add($this->db[$this->target]['config']['banned_cmds'], $this->data[4]);
