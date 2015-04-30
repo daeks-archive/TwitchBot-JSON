@@ -13,6 +13,7 @@
             $execute = false;
             include(CMDS_PATH.DIRECTORY_SEPARATOR.$include);
             if(in_array('none', explode(' ', $cmd['level']))) {
+              $name = str_replace('BOTNAME', BOTNAME, $name);
               array_push($tmp, $name);
             }  
           } catch (Exception $e) {
@@ -28,6 +29,7 @@
               $execute = false;
               include(PLUGINS_PATH.DIRECTORY_SEPARATOR.$ext.DIRECTORY_SEPARATOR.$include);
               if(in_array('none', explode(' ', $cmd['level']))) {
+                $name = str_replace('BOTNAME', BOTNAME, $name);
                 array_push($tmp, $name);
               }  
             } catch (Exception $e) {

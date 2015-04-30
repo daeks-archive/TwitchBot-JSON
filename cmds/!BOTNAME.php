@@ -1,6 +1,6 @@
 <?php
 
-  $cmd = array('level' => 'none',
+  $cmd = array('level' => 'none permit op admin owner',
                'count' => false,
                'help' => 'Shows version information');
 
