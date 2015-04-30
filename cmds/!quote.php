@@ -12,7 +12,7 @@
           $this->say($this->target, false, '#'.ltrim($this->data[4], '#').' - "'.$quote['msg'].'" - ('.date('d.m.Y H:i:s', $quote['time']).')');
         }
       } else {
-        $quoteid = rand(0, (sizeof($this->db[$this->target]['data']['quotes'])-1));
+        $quoteid = array_rand($this->db[$this->target]['data']['quotes']);
         $quote = $this->db[$this->target]['data']['quotes'][$quoteid];
         $this->say($this->target, false, '#'.($quoteid+1).' - "'.$quote['msg'].'" - ('.date('d.m.Y H:i:s', $quote['time']).')');
       }
