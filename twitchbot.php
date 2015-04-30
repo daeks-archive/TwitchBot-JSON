@@ -225,7 +225,7 @@
                           $hasaccess = true;
                         } else {
                           $levels = explode(',', $this->db[$this->target]['data']['cmds'][$this->command]['level']);
-                          foreach($levels as $level => $value) {
+                          foreach($levels as $level) {
                             if($level == 'permit') {
                               if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
                                 $hasaccess = true;
@@ -290,7 +290,7 @@
       if($channel == null) {
         $channel = '#'.strtolower(BOTNAME);
       }
-      if($force || $this->isop($channel) || $this->ispermit($channel) || !isset($this->tmp['history'][$channel]) || (time()-$this->tmp['history'][$channel]) > $this->delay ) {
+      if($force || $this->isop($channel) || $this->ispermit($channel) || !isset($this->tmp['history'][$channel]) || (time()-$this->tmp['history'][$channel]) > DELAY ) {
         $this->send('PRIVMSG '.$channel.' :'.$message);
         $this->tmp['history'][$channel] = time();
       }
