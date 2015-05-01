@@ -11,8 +11,8 @@
         for($i=4;$i<sizeof($this->data);$i++) {
           $output .= $this->data[$i].' ';
         }
-        for($i=0;$i<3;$i++) {
-          $this->say($this->target, true, '/color '.$this->colors[rand(0, sizeof($this->colors))]);
+        for($i=0;$i<2;$i++) {
+          $this->say($this->target, true, '/color '.$this->colors[array_rand($this->colors)]);
           sleep(1);
           $this->say($this->target, false, '/me warns: '.$output.' or RIOT');
         }
