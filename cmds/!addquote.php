@@ -14,7 +14,7 @@
         $quote = array ('msg' => trim($output), 'time' => time());
         $this->db[$this->target]['data']['quotes'] = $this->add($this->db[$this->target]['data']['quotes'], $quote);
         $this->save();
-        $this->say($this->target, true, '@'.$this->username.' quote added');
+        $this->say($this->target, true, '@'.$this->username.' quote added - #'.sizeof($this->db[$this->target]['data']['quotes']));
       }
     }
   }
