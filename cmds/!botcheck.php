@@ -1,11 +1,11 @@
 <?php
 
-  $cmd = array('level' => 'admin owner',
+  $cmd = array('level' => 'op admin owner',
                'count' => false,
                'help' => 'Checks for viewerbots');
 
   if($execute) {
-    if($this->isowner($this->target) || $this->isowner()) {
+    if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
       $stream = array();
       $ch = curl_init(); 
       curl_setopt($ch, CURLOPT_URL, 'https://api.twitch.tv/kraken/streams/'.ltrim($this->target, '#'));
