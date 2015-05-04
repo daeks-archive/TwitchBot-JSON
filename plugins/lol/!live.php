@@ -5,7 +5,7 @@
                'help' => 'Displays live game stats');
   
   if($execute) {    
-    $elo = array();
+    $game = array();
     $ch = curl_init(); 
     curl_setopt($ch, CURLOPT_URL, 'https://euw.api.pvp.net/observer-mode/rest/consumer/getSpectatorGameInfo/EUW1/'.$this->db[$this->target]['config']['plugins']['lol']['userid'].'?api_key='.LOL_APIKEY);
     curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -15,7 +15,7 @@
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     $tmp = curl_exec($ch);
     if($tmp != '') {
-      $elo = json_decode($tmp, true);
+      $game = json_decode($tmp, true);
     }
 
     if(!isset($game['status'])) {
