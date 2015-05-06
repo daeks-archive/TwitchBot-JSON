@@ -114,7 +114,12 @@
         $this->data = explode(' ', str_replace(array(chr(10), chr(13)), '', $line));        
         if($this->data[0] != 'PING') {
           if(sizeof($this->data) >= 3) {
-            $this->username = explode('!', ltrim($this->data[0], ':'))[0];
+            $tmp = explode('!', ltrim($this->data[0], ':'));
+            if(isset($tmp[0])) {
+              $this->username = $tmp[0];
+            } else {
+              $this->username = ltrim($this->data[0], ':');
+            }
             $this->mode = $this->data[1];
             $this->target = $this->data[2];
             switch($this->mode) {  
