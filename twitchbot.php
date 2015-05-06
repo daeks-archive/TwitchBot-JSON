@@ -164,7 +164,7 @@
               case '353':
                 $start = array_search($this->data[4], $this->data)+1;
                 for($i=$start;$i<sizeof($this->data);$i++) {
-                  if(ltrim($this->data[$i], ':') == ltrim($this->target,'#') && strtolower(ltrim($this->data[$i], ':')) != strtolower(BOTNAME)) {
+                  if(strtolower(ltrim($this->data[$i], ':')) == strtolower(ltrim($this->target,'#')) && strtolower(ltrim($this->data[$i], ':')) != strtolower(BOTNAME)) {
                     $this->tmp['active'] = $this->remove($this->tmp['active'], ltrim($this->data[$i], ':'));
                     $this->say(null, true, 'Possible live stream detected - '.ltrim($this->data[$i], ':').' found in '.$this->target);
                   }
