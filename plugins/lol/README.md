@@ -5,3 +5,6 @@
 - Enable this plugin with following command in your channel:
 
 !addplugin lol username=`yourname` userid=`yourid` region=`yourregion`
+
+# Note
+Currently it is fixed to EUW
