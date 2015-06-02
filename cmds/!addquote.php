@@ -11,10 +11,14 @@
         for($i=4;$i<sizeof($this->data);$i++) {
           $output .= $this->data[$i].' ';
         }
-        $quote = array ('msg' => trim($output), 'time' => time());
-        $this->db[$this->target]['data']['quotes'] = $this->add($this->db[$this->target]['data']['quotes'], $quote);
-        $this->save();
-        $this->say($this->target, true, '@'.$this->username.' quote added - #'.sizeof($this->db[$this->target]['data']['quotes']));
+        if(strlen(trim($output)) < 400) {
+          $quote = array ('msg' => trim($output), 'time' => time());
+          $this->db[$this->target]['data']['quotes'] = $this->add($this->db[$this->target]['data']['quotes'], $quote);
+          $this->save();
+          $this->say($this->target, true, '@'.$this->username.' quote added - #'.sizeof($this->db[$this->target]['data']['quotes']));
+        } else {
+          $this->say($this->target, true, '@'.$this->username.' quote excided 400 chars');
+        }
       }
     }
   }

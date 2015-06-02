@@ -24,10 +24,14 @@
             for($i=5;$i<sizeof($this->data);$i++) {
               $output .= $this->data[$i].' ';
             }
-            $tmp = array('enabled' => true, 'level' => 'none', 'text' => trim($output));
-            $this->db[$this->target]['data']['cmds'][$this->data[4]] = $tmp;
-            $this->save();
-            $this->say($this->target, true, '@'.$this->username.' command added');
+            if(strlen(trim($output)) < 400) {
+              $tmp = array('enabled' => true, 'level' => 'none', 'text' => trim($output));
+              $this->db[$this->target]['data']['cmds'][$this->data[4]] = $tmp;
+              $this->save();
+              $this->say($this->target, true, '@'.$this->username.' command added');
+            } else {
+              $this->say($this->target, true, '@'.$this->username.' command excided 400 chars');
+            }
           } else {
             $this->say($this->target, true, '@'.$this->username.' command already exists');
           }
@@ -50,10 +54,14 @@
               for($i=6;$i<sizeof($this->data);$i++) {
                 $output .= $this->data[$i].' ';
               }
-              $tmp = array('enabled' => true, 'level' => strtolower(ltrim($this->data[4], '-ul=')), 'text' => trim($output));
-              $this->db[$this->target]['data']['cmds'][$this->data[5]] = $tmp;
-              $this->save();
-              $this->say($this->target, true, '@'.$this->username.' command added');
+              if(strlen(trim($output)) < 400) {
+                $tmp = array('enabled' => true, 'level' => strtolower(ltrim($this->data[4], '-ul=')), 'text' => trim($output));
+                $this->db[$this->target]['data']['cmds'][$this->data[5]] = $tmp;
+                $this->save();
+                $this->say($this->target, true, '@'.$this->username.' command added');
+              } else {
+                $this->say($this->target, true, '@'.$this->username.' command excided 400 chars');
+              }
             } else {
               $this->say($this->target, true, '@'.$this->username.' command already exists');
             }

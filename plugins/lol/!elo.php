@@ -26,7 +26,7 @@
             $output .= 'Solo 5v5: '.$value['tier'].' ';
             foreach($value['entries'] as $key2 => $entry) {
               if($entry['playerOrTeamId'] == $value['participantId']) {
-                $output .= $entry['division'].' (PWL '.$entry['leaguePoints'].' / '.$entry['wins'].' / '.$entry['losses'].'), ';
+                $output .= $entry['division'].' with '.$entry['leaguePoints'].'pts (WL '.$entry['wins'].' / '.$entry['losses'].'), ';
               }
             }
           }

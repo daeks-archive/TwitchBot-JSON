@@ -14,11 +14,15 @@
             for($i=5;$i<sizeof($this->data);$i++) {
               $output .= $this->data[$i].' ';
             }
-            unset($this->db[$this->target]['data']['cmds'][$this->data[4]]);
-            $tmp = array('enabled' => true, 'level' => 'none', 'text' => trim($output));
-            $this->db[$this->target]['data']['cmds'][$this->data[4]] = $tmp;
-            $this->save();
-            $this->say($this->target, true, '@'.$this->username.' command edited');
+            if(strlen(trim($output)) < 400) {
+              unset($this->db[$this->target]['data']['cmds'][$this->data[4]]);
+              $tmp = array('enabled' => true, 'level' => 'none', 'text' => trim($output));
+              $this->db[$this->target]['data']['cmds'][$this->data[4]] = $tmp;
+              $this->save();
+              $this->say($this->target, true, '@'.$this->username.' command edited');
+            } else {
+              $this->say($this->target, true, '@'.$this->username.' command excided 400 chars');
+            }
           }
         } else if(substr($this->data[4], 0, 4) == '-ul=') {
           $this->data[4] = strtolower($this->data[4]);
@@ -28,11 +32,15 @@
             for($i=6;$i<sizeof($this->data);$i++) {
               $output .= $this->data[$i].' ';
             }
-            unset($this->db[$this->target]['data']['cmds'][$this->data[5]]);
-            $tmp = array('enabled' => true, 'level' => strtolower(ltrim($this->data[4], '-ul=')), 'text' => trim($output));
-            $this->db[$this->target]['data']['cmds'][$this->data[5]] = $tmp;
-            $this->save();
-            $this->say($this->target, true, '@'.$this->username.' command edited');
+            if(strlen(trim($output)) < 400) {
+              unset($this->db[$this->target]['data']['cmds'][$this->data[5]]);
+              $tmp = array('enabled' => true, 'level' => strtolower(ltrim($this->data[4], '-ul=')), 'text' => trim($output));
+              $this->db[$this->target]['data']['cmds'][$this->data[5]] = $tmp;
+              $this->save();
+              $this->say($this->target, true, '@'.$this->username.' command edited');
+            } else {
+              $this->say($this->target, true, '@'.$this->username.' command excided 400 chars');
+            }
           }
         }
       }

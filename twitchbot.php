@@ -74,7 +74,11 @@
       
       if(file_exists(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db')) {
         $this->error = json_decode(file_get_contents(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db'), true);
-        unlink(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db');
+        if(isset($this->error)) {
+          rename(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db', CACHE_PATH.DIRECTORY_SEPARATOR.'lasterror.db');
+        } else {
+          unlink(CACHE_PATH.DIRECTORY_SEPARATOR.'error.db');
+        }
       }
       
       foreach($this->tmp_tables as $table) {
@@ -257,7 +261,13 @@
                             $hasaccess = false;
                           }
                           if($hasaccess) {
-                            $this->say($this->target, false, ''.$this->db[$this->target]['data']['cmds'][$this->command]['text']);
+                            $message = str_replace('@user@', $this->username, $this->db[$this->target]['data']['cmds'][$this->command]['text']);
+                            if(isset($this->data[4])) {
+                              $message = str_replace('@touser@', $this->data[4], $message);
+                            } else {
+                              $message = str_replace('@touser@', 'nobody', $message);
+                            }
+                            $this->say($this->target, false, ''.$message);
                           }
                         }
                       }
