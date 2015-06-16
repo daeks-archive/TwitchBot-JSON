@@ -288,6 +288,19 @@
                       }
                       $this->save();
                     }
+                  } else {
+                    if(isset($this->db[$this->target]['config']['plugins'])) {
+                      foreach($this->db[$this->target]['config']['plugins'] as $ext => $config) {
+                        if(file_exists(PLUGINS_PATH.DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR.$ext.'.php')) {
+                          try {
+                            $execute = true;
+                            include(PLUGINS_PATH.DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR.$ext.'.php');
+                          } catch (Exception $e) {
+                            $this->error($e);
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               break;
@@ -338,6 +351,10 @@
         }
       }
       return $output;
+    }
+    
+    function isnone($channel) {
+      return !$this->ispermit($channel) && !$this->isop($channel) && !$this->isadmin($channel) && !$this->isowner();
     }
     
     function ispermit($channel) {

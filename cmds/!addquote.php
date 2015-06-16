@@ -5,7 +5,7 @@
                'help' => 'Add a text based quote');
   
   if($execute) {
-    if($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
+    if($this->ispermit($this->target) || $this->isop($this->target) || $this->isadmin($this->target) || $this->isowner()) {
       if(isset($this->data[4])) {
         $output = '';
         for($i=4;$i<sizeof($this->data);$i++) {
