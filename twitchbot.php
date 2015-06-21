@@ -137,7 +137,27 @@
                     $this->say($this->target, true, '/mod '.OWNER);
                     $this->say(null, true, 'Loaded v'.$this->version);
                   } else {
+                    $this->say($this->target, true, '/me is dancing around again. HeyGuys');
                     $this->say(null, true, 'Joined '.$this->target);
+                    
+                    $chat = array();
+                    $ch2 = curl_init(); 
+                    curl_setopt($ch2, CURLOPT_URL, 'http://tmi.twitch.tv/group/user/'.ltrim($this->target, '#').'/chatters');
+                    curl_setopt($ch2, CURLOPT_HEADER, 0);
+                    curl_setopt($ch2, CURLOPT_RETURNTRANSFER, 1); 
+                    curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 5);
+                    $tmp2 = curl_exec($ch2);
+                    if($tmp2 != '') {
+                      $chat = json_decode($tmp2, true);
+                    }
+                    
+                    if(isset($chat['chatters']['moderators'])) {
+                      foreach($chat['chatters']['moderators'] as $mod) {
+                        if(!in_array($mod, $this->db[$this->target]['config']['mods'])) {
+                          $this->db[$this->target]['config']['mods'] = $this->add($this->db[$this->target]['config']['mods'], $mod);
+                        }
+                      }
+                    }                   
                   }
                 } else {
                   /*if(!isset($this->db[$this->target]['users'][$this->username])) {
@@ -159,6 +179,7 @@
               break;
               case 'PART':
                 if(ltrim($this->data[0], ':') == strtolower(BOTNAME.'!'.BOTNAME.'@'.BOTNAME.'.tmi.twitch.tv')) {
+                    $this->say($this->target, true, '/me is dancing somewhere else. PJSalt');
                     $this->say(null, true, 'Parted '.$this->target);
                 } else {
                   if($this->username == ltrim($this->target,'#')) {
@@ -337,7 +358,20 @@
     function save() {
       foreach($this->db as $target => $database) {
         foreach($database as $key => $value) {
-          file_put_contents(DB_PATH.DIRECTORY_SEPARATOR.$target.'.'.$key.'.db', json_encode($value, JSON_FORCE_OBJECT), LOCK_EX);
+        
+          array_walk_recursive($value, function(&$item, $key){
+              if(!mb_detect_encoding($item, 'utf-8', true)){
+                      $item = utf8_encode($item);
+              }
+          });
+        
+          $output = json_encode($value, JSON_FORCE_OBJECT);
+          if(json_last_error() === JSON_ERROR_NONE) {
+            file_put_contents(DB_PATH.DIRECTORY_SEPARATOR.$target.'.'.$key.'.db', $output, LOCK_EX);
+          } else {
+            $this->log('ERROR - Unable to save DB '.$target.'.'.$key.'.db - '.json_last_error_msg());
+            $this->say(null, true, ' - Unable to save DB '.$target.'.'.$key.'.db - '.json_last_error_msg());
+          }
         }
       }
     }
@@ -358,19 +392,19 @@
     }
     
     function ispermit($channel) {
-      return in_array($this->username, $this->db[$channel]['config']['permits']);
+      return in_array(strtolower($this->username), array_map('strtolower', $this->db[$channel]['config']['permits']));
     }
 
     function isop($channel) {
-      return in_array($this->username, $this->db[$channel]['config']['mods']);
+      return in_array(strtolower($this->username), array_map('strtolower', $this->db[$channel]['config']['mods']));
     }
     
     function isadmin($channel) {
-      return (ltrim($channel, '#') == strtolower($this->username)) ? true : false;
+      return (strtolower(ltrim($channel, '#')) == strtolower($this->username)) ? true : false;
     }
     
     function isowner() {
-      return in_array($this->username, $this->db['#'.strtolower(BOTNAME)]['config']['mods']);
+      return in_array(strtolower($this->username), array_map('strtolower', $this->db['#'.strtolower(BOTNAME)]['config']['mods']));
     }
 
     function send($cmd) {

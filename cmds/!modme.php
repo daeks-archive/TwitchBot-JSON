@@ -1,8 +1,8 @@
 <?php
 
   $cmd = array('level' => 'none permit op admin owner',
-               'count' => false,
-               'help' => 'Displays list of moderators');
+               'count' => true,
+               'help' => 'Checks for mod rights');
   
   if($execute) {
     $chat = array();
@@ -23,10 +23,12 @@
         }
       }
     }
-
-    if(sizeof($mods) > 0) {
-      $this->say($this->target, true, trim('- Mods of '.$this->target.': '.implode(' ', $this->db[$this->target]['config']['mods'])));
+    
+    $mods = $this->db[$this->target]['config']['mods'];
+    if(sizeof($mods) > 0 && ($this->isop($this->target) || $this->isadmin($this->target) || $this->isowner())) {
+      $this->say($this->target, true, '@'.$this->username.' - Added you successfully as MOD for '.BOTNAME);
     }
+    
   }
   
 ?>

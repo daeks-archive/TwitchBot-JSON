@@ -6,10 +6,12 @@
   
   if($execute) {
     if(sizeof($this->db[$this->target]['data']['quotes']) > 0) {
-      if(isset($this->data[4]) && is_numeric(ltrim($this->data[4], '#')) && ltrim($this->data[4], '#') > 0) {
-        if(array_key_exists((ltrim($this->data[4], '#')-1), $this->db[$this->target]['data']['quotes'])) {
-          $quote = $this->db[$this->target]['data']['quotes'][(ltrim($this->data[4], '#')-1)];
-          $this->say($this->target, false, '#'.ltrim($this->data[4], '#').' - "'.$quote['msg'].'" - ('.date('d.m.Y H:i:s', $quote['time']).')');
+      if(isset($this->data[4]) && is_numeric(ltrim($this->data[4], '#'))) {
+        if(array_key_exists((ltrim($this->data[4], '#')), $this->db[$this->target]['data']['quotes'])) {
+          if(isset($this->db[$this->target]['data']['quotes'][(ltrim($this->data[4], '#'))])) {
+            $quote = $this->db[$this->target]['data']['quotes'][(ltrim($this->data[4], '#'))];
+            $this->say($this->target, false, '#'.ltrim($this->data[4], '#').' - "'.$quote['msg'].'" - ('.date('d.m.Y H:i:s', $quote['time']).')');
+          }
         }
       } else {
         $quoteid = array_rand($this->db[$this->target]['data']['quotes']);
