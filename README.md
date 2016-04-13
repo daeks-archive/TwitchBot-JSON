@@ -2,6 +2,8 @@
 
 This is a PHP based twitch chat bot. No further installation or database is required.
 
+*Note: Development is deprecated. Further changes are done in https://github.com/daeks/TwitchBot-Console*
+
 # Setup
 
 - Get OAuth token from http://twitchapps.com/tmi/
