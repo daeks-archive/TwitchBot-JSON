@@ -24,7 +24,7 @@
       }
     }
 
-    if(sizeof($mods) > 0) {
+    if(sizeof($this->db[$this->target]['config']['mods']) > 0) {
       $this->say($this->target, true, trim('- Mods of '.$this->target.': '.implode(' ', $this->db[$this->target]['config']['mods'])));
     }
   }

@@ -15,7 +15,7 @@
           $quote = array ('msg' => trim($output), 'time' => time());
           $this->db[$this->target]['data']['quotes'] = $this->add($this->db[$this->target]['data']['quotes'], $quote);
           $this->save();
-          $this->say($this->target, true, '@'.$this->username.' quote added - #'.sizeof($this->db[$this->target]['data']['quotes']));
+          $this->say($this->target, true, '@'.$this->username.' quote added - #'.array_search($quote, $this->db[$this->target]['data']['quotes']));
         } else {
           $this->say($this->target, true, '@'.$this->username.' quote excided 400 chars');
         }

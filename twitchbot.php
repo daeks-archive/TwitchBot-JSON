@@ -137,7 +137,7 @@
                     $this->say($this->target, true, '/mod '.OWNER);
                     $this->say(null, true, 'Loaded v'.$this->version);
                   } else {
-                    $this->say($this->target, true, '/me is dancing around again. HeyGuys');
+                    $this->say($this->target, true, '/me is dancing again. HeyGuys');
                     $this->say(null, true, 'Joined '.$this->target);
                     
                     $chat = array();
@@ -292,6 +292,19 @@
                           }
                         }
                       }
+                    } else {
+                      if(isset($this->db[$this->target]['config']['plugins'])) {
+                        foreach($this->db[$this->target]['config']['plugins'] as $ext => $config) {
+                          if(file_exists(PLUGINS_PATH.DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR.$ext.'.php')) {
+                            try {
+                              $execute = true;
+                              include(PLUGINS_PATH.DIRECTORY_SEPARATOR.DIRECTORY_SEPARATOR.$ext.'.php');
+                            } catch (Exception $e) {
+                              $this->error($e);
+                            }
+                          }
+                        }
+                      }
                     }
                     
                     $savestatistic = true;
@@ -365,7 +378,7 @@
               }
           });
         
-          $output = json_encode($value, JSON_FORCE_OBJECT);
+          $output = json_encode($value, JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE);
           if(json_last_error() === JSON_ERROR_NONE) {
             file_put_contents(DB_PATH.DIRECTORY_SEPARATOR.$target.'.'.$key.'.db', $output, LOCK_EX);
           } else {
@@ -396,7 +409,29 @@
     }
 
     function isop($channel) {
-      return in_array(strtolower($this->username), array_map('strtolower', $this->db[$channel]['config']['mods']));
+      if(in_array(strtolower($this->username), array_map('strtolower', $this->db[$channel]['config']['mods']))) {
+        return true;
+      } else {
+        $chat = array();
+        $ch2 = curl_init(); 
+        curl_setopt($ch2, CURLOPT_URL, 'http://tmi.twitch.tv/group/user/'.ltrim($this->target, '#').'/chatters');
+        curl_setopt($ch2, CURLOPT_HEADER, 0);
+        curl_setopt($ch2, CURLOPT_RETURNTRANSFER, 1); 
+        curl_setopt($ch2, CURLOPT_CONNECTTIMEOUT, 5);
+        $tmp2 = curl_exec($ch2);
+        if($tmp2 != '') {
+          $chat = json_decode($tmp2, true);
+        }
+        
+        if(isset($chat['chatters']['moderators'])) {
+          foreach($chat['chatters']['moderators'] as $mod) {
+            if(!in_array($mod, $this->db[$this->target]['config']['mods'])) {
+              $this->db[$this->target]['config']['mods'] = $this->add($this->db[$this->target]['config']['mods'], $mod);
+            }
+          }
+        }
+        return in_array(strtolower($this->username), array_map('strtolower', $this->db[$channel]['config']['mods']));
+      }
     }
     
     function isadmin($channel) {
